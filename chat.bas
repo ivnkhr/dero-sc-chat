@@ -128,7 +128,7 @@ Function ViewChat(room_name String) Uint64
 	15 Attention("Viewing chat room: "+room_name)
 	
 	//If not exist iterate down to 0
-	20 IF EXISTS("room_name+"_message_"+iteration+"_block") == 0 GOTO 32
+	20 IF EXISTS(room_name+"_message_"+iteration+"_block") == 0 THEN GOTO 32
 	
 	//Load message
 	21 LET author = LOAD(room_name+"_message_"+iteration+"_author")
@@ -136,16 +136,18 @@ Function ViewChat(room_name String) Uint64
 	23 LET block = LOAD(room_name+"_message_"+iteration+"_block")
 	
 	//Load nickane for author if exists
-	25 nickname = SIGNER()
+	25 LET nickname = SIGNER()
 	26 IF EXISTS("nickname_"+SIGNER()) == 0 THEN GOTO 30
-	27 nickname = LOAD("nickname_"+SIGNER())
+	27 LET nickname = LOAD("nickname_"+SIGNER())
 	
 	//Print message
 	30 PRINTF "[%d] %s: %s" block nickname text
 	31 PRINTF " "
-	32 iteration = iteration - 1
-	33 IF iteration == -1 THEN RETURN 0 ELSE GOTO 20
+	32 LET iteration = iteration - 1
+	33 IF iteration > 0 THEN GOTO 20
 
+	35 RETURN 0	
+		
 End Function 
 
 
@@ -154,21 +156,22 @@ Function PostMessage(room_name String, message String) Uint64
 	01 DIM iteration as Uint64
 	02 LET iteration = 3
 
+	
 	20 IF EXISTS(room_name+"_index") == 1 THEN GOTO 30
 	21 RETURN Error("Room with this name does not exists")
 
-	25 IF (message!="") THEN GOTO 30
+	25 IF message!="" THEN GOTO 30
 	26 RETURN Error("Message should not be empty")
 	
 	//Pull messages down from bottom up
-	30 IF EXISTS(room_name+"_message_"+iteration+"_block") == 0 GOTO 40
+	30 IF EXISTS(room_name+"_message_"+iteration+"_block") == 0 THEN GOTO 40
 
 	35 STORE(room_name+"_message_"+(iteration)+"_author",LOAD(room_name+"_message_"+(iteration-1)+"_author")
 	36 STORE(room_name+"_message_"+(iteration)+"_text",LOAD(room_name+"_message_"+(iteration-1)+"_text")
 	37 STORE(room_name+"_message_"+(iteration)+"_block",LOAD(room_name+"_message_"+(iteration-1)+"_block")
 	
-	40 iteration = iteration - 1
-	41 IF iteration == 0 THEN RETURN 70 ELSE GOTO 30
+	40 LET iteration = iteration - 1
+	41 IF iteration == 0 THEN GOTO 70 ELSE GOTO 30
 
 	//Insert as 0 index (first message)
 	70 STORE(room_name+"_message_0_author",SIGNER())
@@ -182,7 +185,7 @@ End Function
 
 Function ChangeNickname(new_nickname String) Uint64
 
-	01 IF (new_nickname!="") THEN GOTO 10
+	01 IF new_nickname!="" THEN GOTO 10
 	02 RETURN Error("Nickname should not be empty")
 	
 	10 STORE("nickname_"+SIGNER(), new_nickname)
